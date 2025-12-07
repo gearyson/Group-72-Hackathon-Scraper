@@ -85,6 +85,7 @@ http://localhost:5000
 - Santhi Dhanasekaran
 - Terest Conrad
 - Varun Ramanujam
+- Claude Acorn
 - Dan Geary
 
 ## License
