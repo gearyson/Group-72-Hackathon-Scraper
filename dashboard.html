@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Real Estate Scraper</title>
+    <link rel="stylesheet" href="/src/dashboard.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>🏠 Real Estate Scraper</h1>
+        <div class="user-info">
+            <span id="userDisplay">Welcome</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="scraper-card">
+            <h2>🔍 Scrape Real Estate Listings</h2>
+
+            <div class="quick-links">
+                <button class="quick-link" onclick="setUrl('https://www.zillow.com/new-orleans-la/')">Zillow - New Orleans</button>
+                <button class="quick-link" onclick="setUrl('https://www.zillow.com/homes/for_rent/')">Zillow - Rentals</button>
+                <button class="quick-link" onclick="setUrl('https://www.realtor.com/')">Realtor.com</button>
+                <button class="quick-link" onclick="setUrl('https://www.redfin.com/')">Redfin</button>
+            </div>
+
+            <div class="url-input-group">
+                <input type="url" id="scrapeUrl" placeholder="Enter URL to scrape (e.g., https://www.zillow.com/new-orleans-la/)" required>
+                <button class="btn-scrape" id="scrapeBtn" onclick="startScraping()">
+                    🚀 Scrape
+                </button>
+            </div>
+
+            <h3 style="margin: 20px 0 15px; color: #333; font-size: 16px;">Search Parameters</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="location">📍 Location (City, State)</label>
+                    <input type="text" id="location" placeholder="e.g., New Orleans, LA">
+                </div>
+
+                <div class="form-group">
+                    <label for="propertyType">🏡 Property Type</label>
+                    <select id="propertyType">
+                        <option value="any">Any</option>
+                        <option value="purchase">For Purchase</option>
+                        <option value="rent">For Rent</option>
+                        <option value="lease">For Lease</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="minPrice">💰 Min Price ($)</label>
+                    <input type="number" id="minPrice" placeholder="e.g., 100000">
+                </div>
+
+                <div class="form-group">
+                    <label for="maxPrice">💰 Max Price ($)</label>
+                    <input type="number" id="maxPrice" placeholder="e.g., 500000">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="distanceFrom">📌 Distance From (Address/Place)</label>
+                    <input type="text" id="distanceFrom" placeholder="e.g., Downtown New Orleans">
+                </div>
+
+                <div class="form-group">
+                    <label for="maxDistance">🚗 Max Distance (miles)</label>
+                    <input type="number" id="maxDistance" placeholder="e.g., 10">
+                </div>
+            </div>
+        </div>
+
+        <div class="results-card">
+            <h2>📊 Results</h2>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Scraping website... This may take a moment.</p>
+            </div>
+
+            <div id="resultsContainer">
+                <div class="no-results">
+                    <p>No results yet. Enter a URL and click "Scrape" to get started.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/dashboard.js"></script>
+</body>
+</html>
