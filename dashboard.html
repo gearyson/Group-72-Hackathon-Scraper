@@ -19,6 +19,7 @@
         <div class="tabs">
             <button class="tab-button active" onclick="switchTab('realEstate')">🏠 Real Estate</button>
             <button class="tab-button" onclick="switchTab('general')">🌐 Any Website</button>
+            <button class="tab-button" onclick="switchTab('history')">📚 History</button>
         </div>
 
         <div class="scraper-card">
@@ -121,6 +122,16 @@
 
                 <div class="info-box">
                     <strong>💡 Tip:</strong> This mode extracts clean, structured content from any website. Perfect for blog posts, articles, documentation, or any web page you want to analyze.
+                </div>
+            </div>
+
+            <div id="historyTab" class="tab-content">
+                <h2>📚 Saved Scrapes</h2>
+                <p style="color: #666; margin-bottom: 20px;">View and manage all your saved scrapes from the database.</p>
+                <div id="historyContainer">
+                    <div class="no-results">
+                        <p>Loading history...</p>
+                    </div>
                 </div>
             </div>
         </div>

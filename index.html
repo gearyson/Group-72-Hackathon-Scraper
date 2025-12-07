@@ -146,33 +146,6 @@
         </div>
     </div>
 
-    <script>
-        const USERS = {
-            'demo': 'demo123',
-            'admin': 'admin123',
-            'hackathon': 'outskill2024'
-        };
-
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-
-            if (USERS[username] && USERS[username] === password) {
-                localStorage.setItem('loggedIn', 'true');
-                localStorage.setItem('username', username);
-                window.location.href = '/dashboard.html';
-            } else {
-                errorMessage.textContent = 'Invalid credentials. Please try again.';
-                errorMessage.classList.add('show');
-            }
-        });
-
-        if (localStorage.getItem('loggedIn') === 'true') {
-            window.location.href = '/dashboard.html';
-        }
-    </script>
+    <script type="module" src="/src/login.js"></script>
 </body>
 </html>

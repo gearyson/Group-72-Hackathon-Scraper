@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient.js';
+
 const FIRECRAWL_API_KEY = 'fc-4c3d213630b945bdbe0316d532407c3b';
 const FIRECRAWL_API_URL = 'https://api.firecrawl.dev/v1/scrape';
 
@@ -7,6 +9,23 @@ if (localStorage.getItem('loggedIn') !== 'true') {
 
 const username = localStorage.getItem('username');
 document.getElementById('userDisplay').textContent = `Welcome, ${username}`;
+
+let currentScrapeData = null;
+let currentUserId = null;
+
+async function initializeUser() {
+    const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+
+    if (data) {
+        currentUserId = data.id;
+    }
+}
+
+initializeUser();
 
 window.switchTab = function(tabName) {
     const tabs = document.querySelectorAll('.tab-button');
@@ -21,6 +40,10 @@ window.switchTab = function(tabName) {
     } else if (tabName === 'general') {
         document.querySelector('.tab-button:nth-child(2)').classList.add('active');
         document.getElementById('generalTab').classList.add('active');
+    } else if (tabName === 'history') {
+        document.querySelector('.tab-button:nth-child(3)').classList.add('active');
+        document.getElementById('historyTab').classList.add('active');
+        loadHistory();
     }
 };
 
@@ -90,6 +113,17 @@ window.startScraping = async function() {
             const scraped_content = result.data || {};
             const listings = parseRealEstateData(scraped_content, params);
 
+            currentScrapeData = {
+                scrape_type: 'real_estate',
+                url: url,
+                title: `Real Estate - ${params.location || 'Unknown Location'}`,
+                content: {
+                    params,
+                    scraped_content,
+                    listings
+                }
+            };
+
             displayResults({
                 success: true,
                 data: listings,
@@ -131,9 +165,12 @@ function displayResults(result) {
     const container = document.getElementById('resultsContainer');
 
     let html = `
-        <p style="color: #666; margin-bottom: 15px;">
-            <strong>Source:</strong> ${result.source_url}
-        </p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <p style="color: #666; margin: 0;">
+                <strong>Source:</strong> ${result.source_url}
+            </p>
+            <button class="btn-save" onclick="saveToDatabase()">💾 Save to Database</button>
+        </div>
         <table class="results-table">
             <thead>
                 <tr>
@@ -230,6 +267,17 @@ window.startGeneralScraping = async function() {
         document.getElementById('generalScrapeBtn').textContent = '🚀 Scrape';
 
         if (response.ok) {
+            const data = result.data || {};
+            currentScrapeData = {
+                scrape_type: 'general',
+                url: url,
+                title: data.metadata?.title || `Web Scrape - ${url}`,
+                content: {
+                    format,
+                    mainContentOnly,
+                    data: result.data
+                }
+            };
             displayGeneralResults(result, url, format);
         } else {
             displayError(`Firecrawl API error: ${response.status}`, result.error || response.statusText);
@@ -247,16 +295,19 @@ function displayGeneralResults(result, url, format) {
     const data = result.data || {};
 
     let html = `
-        <div style="margin-bottom: 20px;">
-            <p style="color: #666; margin-bottom: 10px;">
-                <strong>Source URL:</strong> <a href="${url}" target="_blank" style="color: #0f3460;">${url}</a>
-            </p>
-            <p style="color: #666; margin-bottom: 10px;">
-                <strong>Format:</strong> ${format === 'both' ? 'Markdown & HTML' : format.toUpperCase()}
-            </p>
-            <p style="color: #666;">
-                <strong>Status:</strong> <span class="status-success">Successfully Scraped</span>
-            </p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div>
+                <p style="color: #666; margin-bottom: 10px;">
+                    <strong>Source URL:</strong> <a href="${url}" target="_blank" style="color: #0f3460;">${url}</a>
+                </p>
+                <p style="color: #666; margin-bottom: 10px;">
+                    <strong>Format:</strong> ${format === 'both' ? 'Markdown & HTML' : format.toUpperCase()}
+                </p>
+                <p style="color: #666;">
+                    <strong>Status:</strong> <span class="status-success">Successfully Scraped</span>
+                </p>
+            </div>
+            <button class="btn-save" onclick="saveToDatabase()">💾 Save to Database</button>
         </div>
     `;
 
@@ -289,3 +340,169 @@ function displayGeneralResults(result, url, format) {
 
     container.innerHTML = html;
 }
+
+window.saveToDatabase = async function() {
+    if (!currentScrapeData || !currentUserId) {
+        alert('No data to save or user not found');
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('scraped_data')
+            .insert([{
+                user_id: currentUserId,
+                scrape_type: currentScrapeData.scrape_type,
+                url: currentScrapeData.url,
+                title: currentScrapeData.title,
+                content: currentScrapeData.content
+            }])
+            .select();
+
+        if (error) {
+            console.error('Error saving to database:', error);
+            alert('Failed to save to database: ' + error.message);
+        } else {
+            alert('Successfully saved to database!');
+            currentScrapeData = null;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to save to database');
+    }
+};
+
+async function loadHistory() {
+    if (!currentUserId) {
+        document.getElementById('historyContainer').innerHTML = '<p style="color: #666;">Please wait, loading user data...</p>';
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('scraped_data')
+            .select('*')
+            .eq('user_id', currentUserId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error loading history:', error);
+            document.getElementById('historyContainer').innerHTML = '<p style="color: #f44336;">Failed to load history</p>';
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            document.getElementById('historyContainer').innerHTML = '<div class="no-results"><p>No saved scrapes yet. Scrape some websites and save them to see them here!</p></div>';
+            return;
+        }
+
+        displayHistory(data);
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('historyContainer').innerHTML = '<p style="color: #f44336;">Failed to load history</p>';
+    }
+}
+
+function displayHistory(items) {
+    const container = document.getElementById('historyContainer');
+
+    let html = '<div class="history-grid">';
+
+    items.forEach(item => {
+        const date = new Date(item.created_at).toLocaleString();
+        const typeLabel = item.scrape_type === 'real_estate' ? 'Real Estate' : 'General Web';
+        const typeBadge = item.scrape_type === 'real_estate' ? 'badge-real-estate' : 'badge-general';
+
+        html += `
+            <div class="history-card">
+                <div class="history-header">
+                    <h3>${escapeHtml(item.title)}</h3>
+                    <span class="history-badge ${typeBadge}">${typeLabel}</span>
+                </div>
+                <p class="history-url">
+                    <strong>URL:</strong> <a href="${escapeHtml(item.url)}" target="_blank">${escapeHtml(item.url)}</a>
+                </p>
+                <p class="history-date">
+                    <strong>Date:</strong> ${date}
+                </p>
+                <div class="history-actions">
+                    <button class="btn-view" onclick="viewScrapeDetails('${item.id}')">View Details</button>
+                    <button class="btn-delete" onclick="deleteScrape('${item.id}')">Delete</button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+window.viewScrapeDetails = async function(id) {
+    try {
+        const { data, error } = await supabase
+            .from('scraped_data')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (error || !data) {
+            alert('Failed to load scrape details');
+            return;
+        }
+
+        const content = JSON.stringify(data.content, null, 2);
+        const detailsHtml = `
+            <div class="details-modal">
+                <div class="details-modal-content">
+                    <div class="details-modal-header">
+                        <h2>${escapeHtml(data.title)}</h2>
+                        <button onclick="closeDetails()" class="btn-close">×</button>
+                    </div>
+                    <div class="details-modal-body">
+                        <p><strong>URL:</strong> <a href="${escapeHtml(data.url)}" target="_blank">${escapeHtml(data.url)}</a></p>
+                        <p><strong>Type:</strong> ${data.scrape_type === 'real_estate' ? 'Real Estate' : 'General Web'}</p>
+                        <p><strong>Date:</strong> ${new Date(data.created_at).toLocaleString()}</p>
+                        <h3>Content:</h3>
+                        <div class="raw-content" style="max-height: 400px;">${escapeHtml(content)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', detailsHtml);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to load details');
+    }
+};
+
+window.closeDetails = function() {
+    const modal = document.querySelector('.details-modal');
+    if (modal) {
+        modal.remove();
+    }
+};
+
+window.deleteScrape = async function(id) {
+    if (!confirm('Are you sure you want to delete this scrape?')) {
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('scraped_data')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            alert('Failed to delete scrape');
+            return;
+        }
+
+        alert('Scrape deleted successfully');
+        loadHistory();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to delete scrape');
+    }
+};
