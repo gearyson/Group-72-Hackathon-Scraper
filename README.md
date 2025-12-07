@@ -76,8 +76,16 @@ http://localhost:5000
 
 ## Team Members
 
-- Daniel (Dan) - Developer
-- [Add other team members]
+- James Martin
+- Jonathan Brigain
+- Keisha Hunley
+- Michael Friedman
+- Nick Gillis
+- Richard Hughes
+- Santhi Dhanasekaran
+- Terest Conrad
+- Varun Ramanujam
+- Dan Geary
 
 ## License
 
