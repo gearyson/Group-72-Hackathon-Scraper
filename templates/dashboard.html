@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Real Estate Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar h1 {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .navbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .navbar .user-info span {
+            color: #ccc;
+        }
+        
+        .navbar .btn-logout {
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        .navbar .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .main-content {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .scraper-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+        
+        .scraper-card h2 {
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0f3460;
+        }
+        
+        .url-input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .url-input-group input {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .url-input-group input:focus {
+            outline: none;
+            border-color: #0f3460;
+        }
+        
+        .btn-scrape {
+            padding: 14px 40px;
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn-scrape:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(15, 52, 96, 0.4);
+        }
+        
+        .btn-scrape:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .quick-links {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-link {
+            padding: 8px 16px;
+            background: #e8f4fd;
+            color: #0f3460;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .quick-link:hover {
+            background: #d0e8f9;
+        }
+        
+        .results-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .results-card h2 {
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .results-table th,
+        .results-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .results-table th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .results-table tr:hover {
+            background: #fafafa;
+        }
+        
+        .status-success {
+            color: #2e7d32;
+            background: #e8f5e9;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+        
+        .status-error {
+            color: #c62828;
+            background: #ffebee;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #0f3460;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .raw-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error-box {
+            background: #ffebee;
+            border-left: 4px solid #c62828;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: #c62828;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>🏠 Real Estate Scraper</h1>
+        <div class="user-info">
+            <span>Welcome, {{ username }}</span>
+            <a href="/logout" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+    
+    <div class="main-content">
+        <div class="scraper-card">
+            <h2>🔍 Scrape Real Estate Listings</h2>
+            
+            <div class="quick-links">
+                <button class="quick-link" onclick="setUrl('https://www.zillow.com/new-orleans-la/')">Zillow - New Orleans</button>
+                <button class="quick-link" onclick="setUrl('https://www.zillow.com/homes/for_rent/')">Zillow - Rentals</button>
+                <button class="quick-link" onclick="setUrl('https://www.realtor.com/')">Realtor.com</button>
+                <button class="quick-link" onclick="setUrl('https://www.redfin.com/')">Redfin</button>
+            </div>
+            
+            <div class="url-input-group">
+                <input type="url" id="scrapeUrl" placeholder="Enter URL to scrape (e.g., https://www.zillow.com/new-orleans-la/)" required>
+                <button class="btn-scrape" id="scrapeBtn" onclick="startScraping()">
+                    🚀 Scrape
+                </button>
+            </div>
+            
+            <h3 style="margin: 20px 0 15px; color: #333; font-size: 16px;">Search Parameters</h3>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="location">📍 Location (City, State)</label>
+                    <input type="text" id="location" placeholder="e.g., New Orleans, LA">
+                </div>
+                
+                <div class="form-group">
+                    <label for="propertyType">🏡 Property Type</label>
+                    <select id="propertyType">
+                        <option value="any">Any</option>
+                        <option value="purchase">For Purchase</option>
+                        <option value="rent">For Rent</option>
+                        <option value="lease">For Lease</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="minPrice">💰 Min Price ($)</label>
+                    <input type="number" id="minPrice" placeholder="e.g., 100000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxPrice">💰 Max Price ($)</label>
+                    <input type="number" id="maxPrice" placeholder="e.g., 500000">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="distanceFrom">📌 Distance From (Address/Place)</label>
+                    <input type="text" id="distanceFrom" placeholder="e.g., Downtown New Orleans">
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxDistance">🚗 Max Distance (miles)</label>
+                    <input type="number" id="maxDistance" placeholder="e.g., 10">
+                </div>
+            </div>
+        </div>
+        
+        <div class="results-card">
+            <h2>📊 Results</h2>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Scraping website... This may take a moment.</p>
+            </div>
+            
+            <div id="resultsContainer">
+                <div class="no-results">
+                    <p>No results yet. Enter a URL and click "Scrape" to get started.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function setUrl(url) {
+            document.getElementById('scrapeUrl').value = url;
+        }
+        
+        async function startScraping() {
+            const url = document.getElementById('scrapeUrl').value;
+            const location = document.getElementById('location').value;
+            const propertyType = document.getElementById('propertyType').value;
+            const minPrice = document.getElementById('minPrice').value;
+            const maxPrice = document.getElementById('maxPrice').value;
+            const distanceFrom = document.getElementById('distanceFrom').value;
+            const maxDistance = document.getElementById('maxDistance').value;
+            
+            if (!url) {
+                alert('Please enter a URL to scrape');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('resultsContainer').innerHTML = '';
+            document.getElementById('scrapeBtn').disabled = true;
+            document.getElementById('scrapeBtn').textContent = '⏳ Scraping...';
+            
+            try {
+                const response = await fetch('/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        location: location,
+                        property_type: propertyType,
+                        min_price: minPrice,
+                        max_price: maxPrice,
+                        distance_from: distanceFrom,
+                        max_distance: maxDistance
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('scrapeBtn').disabled = false;
+                document.getElementById('scrapeBtn').textContent = '🚀 Scrape';
+                
+                if (result.success) {
+                    displayResults(result);
+                } else {
+                    displayError(result.error, result.details);
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('scrapeBtn').disabled = false;
+                document.getElementById('scrapeBtn').textContent = '🚀 Scrape';
+                displayError('Network error: ' + error.message);
+            }
+        }
+        
+        function displayResults(result) {
+            const container = document.getElementById('resultsContainer');
+            
+            let html = `
+                <p style="color: #666; margin-bottom: 15px;">
+                    <strong>Source:</strong> ${result.source_url}
+                </p>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Location</th>
+                            <th>Type</th>
+                            <th>Price Range</th>
+                            <th>Distance From</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            result.data.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.source}</td>
+                        <td>${item.location}</td>
+                        <td>${item.property_type}</td>
+                        <td>${item.price_range}</td>
+                        <td>${item.distance_from}</td>
+                        <td><span class="status-success">${item.status}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            if (result.raw_content) {
+                html += `
+                    <h3 style="margin-top: 30px; color: #333;">Raw Scraped Content (Preview)</h3>
+                    <div class="raw-content">${escapeHtml(result.raw_content)}</div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function displayError(error, details) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="error-box">
+                    <strong>Error:</strong> ${error}
+                    ${details ? '<br><br><strong>Details:</strong> ' + details : ''}
+                </div>
+            `;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
